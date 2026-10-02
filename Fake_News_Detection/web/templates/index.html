@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FakeNews GPT — AI Fact Checking & Verification</title>
+  <meta name="description" content="ChatGPT-inspired intelligent news verification powered by 3-Layer AI: Real-Time News (GDELT), Fact-Checking Databases, and BERT Neural Classifiers." />
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310a37f'><path d='M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z'/></svg>" />
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Main ChatGPT Stylesheet -->
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-layout" id="app-layout">
+    
+    <!-- Backdrop for mobile drawer -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+
+    <!-- ── Left Sidebar (ChatGPT Style) ────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+      
+      <!-- Top Sidebar Actions -->
+      <div class="sidebar-top">
+        <div class="sidebar-brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <span class="brand-text">FakeNews GPT</span>
+        </div>
+        
+        <button class="icon-btn sidebar-close-btn" id="sidebar-close-btn" title="Close sidebar" onclick="toggleSidebar(false)">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- New Chat Button -->
+      <div class="new-chat-container">
+        <button class="new-chat-btn" id="new-chat-btn" onclick="startNewChat()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>New check</span>
+          <kbd class="shortcut-badge">Ctrl+K</kbd>
+        </button>
+      </div>
+
+      <!-- Verification Layer Status Box -->
+      <div class="sidebar-status-box">
+        <div class="status-box-header">
+          <span class="status-box-title">Active AI Engines</span>
+          <span class="status-dot-pulse"></span>
+        </div>
+        <div class="engine-item">
+          <span class="engine-indicator on"></span>
+          <span class="engine-name">Real-Time News Wire (GDELT)</span>
+        </div>
+        <div class="engine-item">
+          <span class="engine-indicator on"></span>
+          <span class="engine-name">Fact Check DB &amp; Wiki</span>
+        </div>
+        <div class="engine-item">
+          <span class="engine-indicator" id="bert-engine-dot"></span>
+          <span class="engine-name">RoBERTa / BERT Classifier</span>
+        </div>
+      </div>
+
+      <!-- Chat / Claim History List -->
+      <div class="sidebar-history-section">
+        <div class="history-label-row">
+          <span class="history-label">Recent Verifications</span>
+          <button class="clear-history-link" onclick="clearHistory()" title="Clear verification history">Clear</button>
+        </div>
+        
+        <div class="history-list" id="history-list">
+          <!-- Dynamically populated via JS -->
+          <div class="history-empty" id="history-empty">
+            <span>No claims checked yet</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Footer / User Profile -->
+      <div class="sidebar-footer">
+        <div class="user-profile-menu">
+          <div class="user-avatar">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </div>
+          <div class="user-info">
+            <div class="user-name">Fact Checker Pro</div>
+            <div class="user-sub">3-Layer Verification</div>
+          </div>
+        </div>
+
+        <div class="sidebar-bottom-actions">
+          <!-- Theme Toggle -->
+          <button class="icon-btn" id="theme-toggle-btn" title="Toggle Dark/Light Mode" onclick="toggleTheme()">
+            <svg class="sun-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="moon-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+
+          <!-- Settings Button -->
+          <button class="icon-btn" id="open-settings-btn" title="Settings &amp; Model Options" onclick="openModal('settings-modal')">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main Chat Area ──────────────────────────────────────── -->
+    <main class="main-content" id="main-content">
+      
+      <!-- Top Bar Header (ChatGPT style) -->
+      <header class="top-nav">
+        <div class="top-nav-left">
+          <button class="icon-btn sidebar-toggle-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar (Ctrl+B)">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <!-- Model Selector Dropdown (ChatGPT 4o pill) -->
+          <div class="model-selector-wrapper">
+            <button class="model-selector-btn" id="model-selector-btn" onclick="toggleModelDropdown()">
+              <span class="model-name" id="current-model-name">FakeNews-4o</span>
+              <span class="model-badge">Tri-Layer</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+
+            <!-- Model Options Dropdown -->
+            <div class="model-dropdown-menu" id="model-dropdown-menu">
+              <div class="dropdown-item selected" onclick="selectModel('full', 'FakeNews-4o (Tri-Layer)', true)">
+                <div class="dropdown-item-header">
+                  <div class="dropdown-item-title">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span>FakeNews-4o (Tri-Layer)</span>
+                  </div>
+                  <span class="dropdown-check">✓</span>
+                </div>
+                <div class="dropdown-item-desc">News Wire + Fact-Check DB + BERT Neural Classifier. Maximum accuracy.</div>
+              </div>
+
+              <div class="dropdown-item" onclick="selectModel('fast', 'Fast Examiner (L1+L2)', false)">
+                <div class="dropdown-item-header">
+                  <div class="dropdown-item-title">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>Fast Examiner (L1+L2)</span>
+                  </div>
+                  <span class="dropdown-check"></span>
+                </div>
+                <div class="dropdown-item-desc">Skips heavy BERT neural pass. Fast real-time news &amp; entity lookup.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-nav-right">
+          <button class="top-action-btn" title="Export / Share current session" onclick="openShareModal()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            <span class="hide-mobile">Share</span>
+          </button>
+
+          <button class="top-action-btn" title="Start a new check" onclick="startNewChat()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span class="hide-mobile">New Check</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Chat Scroll Container -->
+      <div class="chat-container" id="chat-container">
+        
+        <!-- ── Empty State / Hero Screen (ChatGPT Style) ────────── -->
+        <div class="hero-screen" id="hero-screen">
+          <div class="hero-logo-wrap">
+            <div class="chatgpt-logo-orb">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h1 class="hero-title">What claim do you want to verify?</h1>
+            <p class="hero-subtitle">
+              Inspect claims against global real-time news, verified fact-check registries, and deep BERT NLP classification.
+            </p>
+          </div>
+
+          <!-- Feature Pills -->
+          <div class="hero-feature-tags">
+            <span class="feature-tag">
+              <span class="tag-dot"></span>
+              Layer 1: GDELT &amp; NewsAPI
+            </span>
+            <span class="feature-tag">
+              <span class="tag-dot"></span>
+              Layer 2: Google Fact Check &amp; Wiki
+            </span>
+            <span class="feature-tag">
+              <span class="tag-dot"></span>
+              Layer 3: RoBERTa / BERT Classifier
+            </span>
+          </div>
+
+          <!-- Quick Suggestion Cards (ChatGPT 4-card grid) -->
+          <div class="suggestion-grid">
+            <button class="suggestion-card" onclick="submitExample('PM Modi is 100 years old')">
+              <div class="suggestion-card-title">Political &amp; Age Claim</div>
+              <div class="suggestion-card-prompt">"PM Modi is 100 years old"</div>
+              <div class="suggestion-card-arrow">→</div>
+            </button>
+
+            <button class="suggestion-card" onclick="submitExample('Elon Musk bought Twitter for $44 billion')">
+              <div class="suggestion-card-title">Business &amp; Tech Acquisition</div>
+              <div class="suggestion-card-prompt">"Elon Musk bought Twitter for $44 billion"</div>
+              <div class="suggestion-card-arrow">→</div>
+            </button>
+
+            <button class="suggestion-card" onclick="submitExample('India landed on the moon in 2023')">
+              <div class="suggestion-card-title">Science &amp; Space Exploration</div>
+              <div class="suggestion-card-prompt">"India landed on the moon in 2023"</div>
+              <div class="suggestion-card-arrow">→</div>
+            </button>
+
+            <button class="suggestion-card" onclick="submitExample('5G towers cause COVID-19 transmission')">
+              <div class="suggestion-card-title">Health &amp; Viral Conspiracy</div>
+              <div class="suggestion-card-prompt">"5G towers cause COVID-19 transmission"</div>
+              <div class="suggestion-card-arrow">→</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Dynamic Messages Stream ────────────────────────── -->
+        <div class="messages-stream" id="messages-stream">
+          <!-- Messages will be dynamically rendered here -->
+        </div>
+
+        <!-- Scroll anchor -->
+        <div id="scroll-bottom-anchor"></div>
+      </div>
+
+      <!-- ── Bottom Input Area (Authentic ChatGPT Floating Bar) ──── -->
+      <div class="bottom-input-container">
+        <div class="prompt-box-wrapper">
+          
+          <div class="prompt-box" id="prompt-box">
+            
+            <!-- Quick Setting Pill on the left inside input box -->
+            <div class="input-addon-left">
+              <label class="bert-chip-toggle" title="Toggle BERT AI Linguistic Classifier">
+                <input type="checkbox" id="bert-toggle-checkbox" checked onchange="handleBertToggle(this)" />
+                <span class="bert-chip-indicator"></span>
+                <span class="bert-chip-text">BERT AI</span>
+              </label>
+            </div>
+
+            <!-- Auto-expanding Textarea -->
+            <textarea
+              id="prompt-textarea"
+              class="prompt-textarea"
+              placeholder="Message FakeNews GPT or paste a news headline..."
+              rows="1"
+              autofocus
+            ></textarea>
+
+            <!-- Right Actions: Voice & Send -->
+            <div class="input-actions-right">
+              <!-- Speech-to-text Mic button -->
+              <button
+                class="input-icon-btn mic-btn"
+                id="mic-btn"
+                title="Dictate claim using voice"
+                onclick="toggleVoiceRecognition()"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 003-3V5a3 3 0 00-6 0v6a3 3 0 003 3z" />
+                </svg>
+              </button>
+
+              <!-- Send Button (ChatGPT circular arrow) -->
+              <button
+                class="send-btn"
+                id="send-btn"
+                title="Verify Claim (Enter)"
+                onclick="handleSendPrompt()"
+                disabled
+              >
+                <svg class="send-arrow-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z" transform="rotate(-90 12 12)" />
+                </svg>
+                <div class="send-spinner"></div>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Bottom Micro Disclaimer -->
+          <div class="bottom-disclaimer">
+            <span>FakeNews GPT cross-references multiple open registries. Verify critical news with authoritative sources.</span>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── Modals ──────────────────────────────────────────────── -->
+
+  <!-- Settings Modal -->
+  <div class="modal-backdrop" id="settings-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Settings &amp; Verification Config</h3>
+        <button class="icon-btn modal-close" onclick="closeModal('settings-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">RoBERTa / BERT Classifier</div>
+            <div class="setting-desc">Runs transformer-based linguistic and syntax deception detection.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="modal-bert-toggle" checked onchange="syncBertModal(this)" />
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">Sound Effects &amp; Audio Speech</div>
+            <div class="setting-desc">Enable Text-to-Speech audio reader on verdicts.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="tts-toggle" checked />
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">Appearance Theme</div>
+            <div class="setting-desc">Choose between ChatGPT Dark mode or Light mode.</div>
+          </div>
+          <select class="settings-select" id="theme-select" onchange="setTheme(this.value)">
+            <option value="dark">Dark Theme (Iconic)</option>
+            <option value="light">Light Theme</option>
+          </select>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">Clear Local History</div>
+            <div class="setting-desc">Erase all saved verification sessions from this browser.</div>
+          </div>
+          <button class="danger-btn" onclick="clearHistory(); closeModal('settings-modal');">Clear All</button>
+        </div>
+
+        <div class="setting-row-info">
+          <h4>Keyboard Shortcuts:</h4>
+          <ul class="shortcuts-list">
+            <li><kbd>Enter</kbd> Send claim for verification</li>
+            <li><kbd>Shift</kbd> + <kbd>Enter</kbd> New line in prompt</li>
+            <li><kbd>Ctrl</kbd> + <kbd>K</kbd> Start new verification</li>
+            <li><kbd>Ctrl</kbd> + <kbd>B</kbd> Toggle left sidebar</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="primary-modal-btn" onclick="closeModal('settings-modal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share / Export Modal -->
+  <div class="modal-backdrop" id="share-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Share &amp; Export Verification Report</h3>
+        <button class="icon-btn modal-close" onclick="closeModal('share-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-text">Export the latest fact-check breakdown or copy a summary to your clipboard.</p>
+        
+        <div class="share-actions-grid">
+          <button class="share-btn-card" onclick="copySessionSummary()">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <div class="share-card-title">Copy Markdown Summary</div>
+            <div class="share-card-sub">Format ready for Slack, Discord or Docs</div>
+          </button>
+
+          <button class="share-btn-card" onclick="downloadJSONReport()">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <div class="share-card-title">Download JSON Telemetry</div>
+            <div class="share-card-sub">Raw multi-layer signals and truth score metrics</div>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="primary-modal-btn" onclick="closeModal('share-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main JavaScript App -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
